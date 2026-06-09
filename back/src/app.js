@@ -1,19 +1,11 @@
 import express from 'express'
 import cors from 'cors'
-import fs from 'fs'
-import path from 'path'
-import { fileURLToPath } from 'url'
+import Product from './product.js'  
 
 const app = express()
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-
-const DATA_FILE = path.join(__dirname, 'data', 'products.json')
-
 app.use(cors())
 app.use(express.json())
-
 
 app.get('/api/health', (req, res) => {
   res.json({
@@ -22,114 +14,67 @@ app.get('/api/health', (req, res) => {
   })
 })
 
-
-const readProducts = () => {
-  const data = fs.readFileSync(DATA_FILE, 'utf-8')
-  return JSON.parse(data)
-}
-
-const writeProducts = (products) => {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(products, null, 2))
-}
-
-
-app.get('/api/products', (req, res) => {
-  const products = readProducts()
-  res.json(products)
+app.get('/api/products', async (req, res) => {
+  try {
+    const products = await Product.find()
+    res.json(products)
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' })
+  }
 })
 
-
-app.get('/api/products/:id', (req, res) => {
-  const id = Number(req.params.id)
-
-  const products = readProducts()
-
-  const product = products.find(p => p.id === id)
-
-  if (!product) {
-    return res.status(404).json({
-      message: 'Product not found'
-    })
+app.get('/api/products/:id', async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id)
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' })
+    }
+    res.json(product)
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' })
   }
-
-  res.json(product)
 })
 
-
-app.post('/api/products', (req, res) => {
-  const { name, price, category, image, stock } = req.body
-
-  if (!name || !price) {
-    return res.status(400).json({
-      message: 'name and price are required'
-    })
+app.post('/api/products', async (req, res) => {
+  try {
+    const { name, price, category, image, stock } = req.body
+    if (!name || !price) {
+      return res.status(400).json({ message: 'name and price are required' })
+    }
+    const newProduct = new Product({ name, price, category, image, stock })
+    await newProduct.save()
+    res.status(201).json(newProduct)
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' })
   }
-
-  const products = readProducts()
-
-  const newProduct = {
-    id:
-      products.length > 0
-        ? Math.max(...products.map(p => p.id)) + 1
-        : 1,
-    name,
-    price,
-    category: category || '',
-    image: image || '',
-    stock: stock || 0
-  }
-
-  products.push(newProduct)
-
-  writeProducts(products)
-
-  res.status(201).json(newProduct)
 })
 
-
-app.put('/api/products/:id', (req, res) => {
-  const id = Number(req.params.id)
-
-  const products = readProducts()
-
-  const index = products.findIndex(p => p.id === id)
-
-  if (index === -1) {
-    return res.status(404).json({
-      message: 'Product not found'
-    })
+app.put('/api/products/:id', async (req, res) => {
+  try {
+    const updatedProduct = await Product.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    )
+    if (!updatedProduct) {
+      return res.status(404).json({ message: 'Product not found' })
+    }
+    res.json(updatedProduct)
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' })
   }
-
-  products[index] = {
-    ...products[index],
-    ...req.body,
-    id
-  }
-
-  writeProducts(products)
-
-  res.json(products[index])
 })
 
-
-app.delete('/api/products/:id', (req, res) => {
-  const id = Number(req.params.id)
-
-  const products = readProducts()
-
-  const filteredProducts = products.filter(
-    product => product.id !== id
-  )
-
-  if (filteredProducts.length === products.length) {
-    return res.status(404).json({
-      message: 'Product not found'
-    })
+app.delete('/api/products/:id', async (req, res) => {
+  try {
+    const deletedProduct = await Product.findByIdAndDelete(req.params.id)
+    if (!deletedProduct) {
+      return res.status(404).json({ message: 'Product not found' })
+    }
+    res.status(204).send()
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' })
   }
-
-  writeProducts(filteredProducts)
-
-  res.status(204).send()
 })
 
 export default app
