@@ -4,6 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "concurrently --names \"API,UI\" --prefix-colors \"yellow.bold,cyan.bold\" \"npm run dev --prefix back\" \"npm run dev --prefix front\"",
+    "test": "npm test --prefix back && npm test --prefix front",
+    "test:back": "npm test --prefix back",
+    "test:front": "npm test --prefix front",
     "install:all": "npm install --prefix back && npm install --prefix front && npm install"
   },
   "devDependencies": {
