@@ -1,0 +1,63 @@
+.ge-hero {
+  padding: 8rem 0;
+  background: radial-gradient(circle at center, #1e1505 0%, #0d0c0a 100%);
+  text-align: center;
+  border-bottom: 1px solid rgba(201, 168, 76, 0.05);
+}
+
+.ge-hero__title {
+  font-size: clamp(2.5rem, 8vw, 4.5rem);
+  font-weight: 200;
+  letter-spacing: 0.1em;
+  color: var(--text-color);
+  line-height: 1.1;
+  margin-bottom: 2rem;
+  text-transform: uppercase;
+}
+
+.ge-hero__subtitle {
+  font-size: 1.25rem;
+  color: var(--gold-dim);
+  margin-bottom: 3rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.ge-hero__btn {
+  display: inline-block;
+  background: var(--gold);
+  color: var(--bg-color);
+  padding: 1rem 2.5rem;
+  border-radius: 4px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  transition: all 0.3s;
+}
+
+.ge-hero__btn:hover {
+  background: #e0c270;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(201, 168, 76, 0.2);
+}
+
+.ge-featured {
+  padding: 5rem 0;
+}
+
+.ge-home__more {
+  margin-top: 3rem;
+  text-align: center;
+}
+
+.ge-link-more {
+  color: var(--gold);
+  font-weight: 600;
+  font-size: 1.1rem;
+  transition: opacity 0.2s;
+}
+
+.ge-link-more:hover {
+  opacity: 0.8;
+}
