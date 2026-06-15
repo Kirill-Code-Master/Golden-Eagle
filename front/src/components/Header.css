@@ -1,0 +1,87 @@
+.ge-header {
+  background: linear-gradient(160deg, #140f03 0%, #1e1505 55%, #140f03 100%);
+  border-bottom: 1px solid rgba(201,168,76,.14);
+  padding: 1rem 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.ge-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ge-logo {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.ge-logo__img {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+}
+
+.ge-logo__name {
+  font-size: clamp(1rem, 3vw, 1.5rem);
+  font-weight: 300;
+  letter-spacing: .32em;
+  color: var(--gold);
+  line-height: 1;
+  text-shadow: 0 0 28px rgba(201,168,76,.28);
+}
+
+.ge-logo__sub {
+  font-size: .6rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: #6b5933;
+  margin-top: .25rem;
+}
+
+.ge-nav {
+  display: flex;
+  gap: 2rem;
+}
+
+.ge-nav__link {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-color);
+  opacity: 0.7;
+  transition: opacity 0.2s, color 0.2s;
+}
+
+.ge-nav__link:hover, .ge-nav__link--active {
+  opacity: 1;
+  color: var(--gold);
+}
+
+.ge-cart-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(201,168,76,0.1);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  border: 1px solid rgba(201,168,76,0.2);
+  transition: all 0.2s;
+}
+
+.ge-cart-link:hover {
+  background: rgba(201,168,76,0.2);
+  border-color: var(--gold);
+}
+
+.ge-cart-link__icon {
+  font-size: 1.1rem;
+}
+
+.ge-cart-link__text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--gold);
+}

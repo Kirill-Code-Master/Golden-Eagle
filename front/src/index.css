@@ -1,56 +1,174 @@
+/* ── Base ──────────────────────────────────────────────────── */
+:root {
+  --bg-color: #0d0c0a;
+  --text-color: #e0d5c0;
+  --gold: #c9a84c;
+  --gold-dim: #8c7545;
+  --gold-very-dim: #302a1c;
+  --surface: #131109;
+  --border: #1e1b12;
+}
+
 * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  margin: 0;
-  min-width: 320px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   min-height: 100vh;
-  font-family:
-    Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: #172033;
-  background: #f4f7fb;
 }
 
-button,
-input,
-textarea,
-select {
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
   font: inherit;
 }
 
-.page {
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: 32px;
+/* ── Layout ─────────────────────────────────────────────────── */
+.ge-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
 }
 
-.hero {
-  width: min(100%, 720px);
-  padding: 40px;
-  border: 1px solid #d7e0ea;
-  border-radius: 8px;
-  background: #ffffff;
+.ge-main {
+  min-height: calc(100vh - 200px); /* Adjust based on header/footer height */
+  padding: 2.5rem 0 4rem;
 }
 
-.eyebrow {
-  margin: 0 0 12px;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+/* ── Typography ─────────────────────────────────────────────── */
+.ge-stitle {
+  font-size: .76rem;
+  font-weight: 600;
+  letter-spacing: .18em;
   text-transform: uppercase;
-  color: #2f6fed;
+  color: var(--gold);
+  margin-bottom: 1.25rem;
+  padding-bottom: .75rem;
+  border-bottom: 1px solid rgba(201,168,76,.1);
 }
 
-h1 {
-  margin: 0 0 16px;
-  font-size: clamp(32px, 6vw, 56px);
-  line-height: 1.05;
+/* ── Components (extracted from Home.jsx) ────────────────────── */
+.ge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.5rem;
 }
 
-p {
-  margin: 0;
-  font-size: 18px;
-  line-height: 1.6;
+.ge-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.ge-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(201,168,76,.28);
+  box-shadow: 0 18px 44px rgba(0,0,0,.55);
+}
+
+.ge-card__thumb {
+  height: 200px;
+  background: #1a1609;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.ge-card__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ge-card__emoji {
+  font-size: 4rem;
+  opacity: .48;
+}
+
+.ge-card__body {
+  padding: 1.25rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.ge-tag {
+  display: inline-block;
+  font-size: .66rem;
+  letter-spacing: .06em;
+  color: var(--gold-dim);
+  background: #221e13;
+  padding: .2rem .55rem;
+  border-radius: 20px;
+  margin-bottom: .75rem;
+  align-self: flex-start;
+}
+
+.ge-card__name {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-color);
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.ge-card__footer {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ge-price {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.ge-btn-view {
+  background: transparent;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.ge-btn-view:hover {
+  background: var(--gold);
+  color: var(--bg-color);
+}
+
+.ge-cart-empty {
+  text-align: center;
+  padding: 5rem 0;
+  color: var(--gold-dim);
+}
+
+.ge-cart-empty__icon {
+  font-size: 5rem;
+  display: block;
+  margin-bottom: 2rem;
+  opacity: 0.3;
+}
+
+.ge-cart-empty p {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
 }
