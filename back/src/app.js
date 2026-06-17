@@ -14,16 +14,34 @@ app.get('/api/health', (req, res) => {
   })
 })
 
-
 app.get('/api/products', async (req, res) => {
   try {
-    const { sortBy, order = 'asc' } = req.query
+    const {
+      sortBy,
+      order = 'asc',
+      category,
+      material
+    } = req.query
 
-    const allowedFields = ['price', 'name']
+    const filter = {}
 
-    let query = Product.find()
+    if (category) {
+      filter.category = {
+        $in: category.split(',')
+      }
+    }
 
-    if (allowedFields.includes(sortBy)) {
+    if (material) {
+      filter.material = {
+        $in: material.split(',')
+      }
+    }
+
+    const allowedSortFields = ['price', 'name']
+
+    let query = Product.find(filter)
+
+    if (allowedSortFields.includes(sortBy)) {
       query = query.sort({
         [sortBy]: order === 'desc' ? -1 : 1
       })
