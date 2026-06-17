@@ -14,9 +14,23 @@ app.get('/api/health', (req, res) => {
   })
 })
 
+
 app.get('/api/products', async (req, res) => {
   try {
-    const products = await Product.find()
+    const { sortBy, order = 'asc' } = req.query
+
+    const allowedFields = ['price', 'name']
+
+    let query = Product.find()
+
+    if (allowedFields.includes(sortBy)) {
+      query = query.sort({
+        [sortBy]: order === 'desc' ? -1 : 1
+      })
+    }
+
+    const products = await query
+
     res.json(products)
   } catch (error) {
     res.status(500).json({ message: 'Server error' })
