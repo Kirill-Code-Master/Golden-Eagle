@@ -21,7 +21,9 @@ app.get('/api/products', async (req, res) => {
       order = 'asc',
       category,
       material,
-      search
+      search,
+      page = 1,
+      limit = 20
     } = req.query
 
     const filter = {}
@@ -63,6 +65,9 @@ app.get('/api/products', async (req, res) => {
 
     const allowedSortFields = ['price', 'name']
 
+    const pageNumber = Math.max(Number(page), 1)
+    const pageSize = Math.min(Math.max(Number(limit), 1), 50)
+
     let query = Product.find(filter)
 
     if (allowedSortFields.includes(sortBy)) {
@@ -71,9 +76,19 @@ app.get('/api/products', async (req, res) => {
       })
     }
 
-    const products = await query
+    const total = await Product.countDocuments(filter)
 
-    res.json(products)
+    const products = await query
+      .skip((pageNumber - 1) * pageSize)
+      .limit(pageSize)
+
+    res.json({
+      products,
+      page: pageNumber,
+      limit: pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize)
+    })
   } catch (error) {
     res.status(500).json({ message: 'Server error' })
   }
@@ -93,12 +108,32 @@ app.get('/api/products/:id', async (req, res) => {
 
 app.post('/api/products', async (req, res) => {
   try {
-    const { name, price, category, image, stock } = req.body
-    if (!name || !price) {
-      return res.status(400).json({ message: 'name and price are required' })
+    const {
+      name,
+      price,
+      category,
+      material,
+      image,
+      stock
+    } = req.body
+
+    if (!name || price == null) {
+      return res.status(400).json({
+        message: 'name and price are required'
+      })
     }
-    const newProduct = new Product({ name, price, category, image, stock })
+
+    const newProduct = new Product({
+      name,
+      price,
+      category,
+      material,
+      image,
+      stock
+    })
+
     await newProduct.save()
+
     res.status(201).json(newProduct)
   } catch (error) {
     res.status(500).json({ message: 'Server error' })

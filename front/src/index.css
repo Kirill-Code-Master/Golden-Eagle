@@ -155,6 +155,16 @@ button {
   color: var(--bg-color);
 }
 
+.ge-btn-view:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}
+
+.ge-btn-view--active {
+  background: var(--gold);
+  color: var(--bg-color);
+}
+
 .ge-cart-empty {
   text-align: center;
   padding: 5rem 0;
@@ -171,4 +181,42 @@ button {
 .ge-cart-empty p {
   font-size: 1.1rem;
   margin-bottom: 0.5rem;
+}
+
+.ge-filters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.ge-input,
+.ge-select {
+  background: var(--surface);
+  color: var(--text-color);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .75rem 1rem;
+}
+
+.ge-input {
+  min-width: 280px;
+  flex: 1;
+}
+
+.ge-select {
+  min-width: 180px;
+}
+
+.ge-pagination {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ge-empty {
+  color: var(--gold-dim);
+  margin-top: 1.5rem;
 }
