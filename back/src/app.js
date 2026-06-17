@@ -20,7 +20,8 @@ app.get('/api/products', async (req, res) => {
       sortBy,
       order = 'asc',
       category,
-      material
+      material,
+      search
     } = req.query
 
     const filter = {}
@@ -35,6 +36,29 @@ app.get('/api/products', async (req, res) => {
       filter.material = {
         $in: material.split(',')
       }
+    }
+
+    if (search) {
+      filter.$or = [
+        {
+          name: {
+            $regex: search,
+            $options: 'i'
+          }
+        },
+        {
+          category: {
+            $regex: search,
+            $options: 'i'
+          }
+        },
+        {
+          material: {
+            $regex: search,
+            $options: 'i'
+          }
+        }
+      ]
     }
 
     const allowedSortFields = ['price', 'name']
