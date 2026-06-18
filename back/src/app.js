@@ -3,6 +3,7 @@ import cors from 'cors'
 import Product from './product.js'  
 
 const app = express()
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
 app.use(cors())
 app.use(express.json())
@@ -35,8 +36,16 @@ app.get('/api/products', async (req, res) => {
     }
 
     if (material) {
-      filter.material = {
-        $in: material.split(',')
+      const materialFilters = material
+        .split(',')
+        .map((value) => value.trim())
+        .filter(Boolean)
+        .map((value) => new RegExp(escapeRegex(value), 'i'))
+
+      if (materialFilters.length) {
+        filter.material = {
+          $in: materialFilters
+        }
       }
     }
 
