@@ -4,6 +4,10 @@ import Product from './product.js'
 
 const app = express()
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+const appendAndCondition = (filter, condition) => {
+  filter.$and = filter.$and || []
+  filter.$and.push(condition)
+}
 
 app.use(cors())
 app.use(express.json())
@@ -40,12 +44,15 @@ app.get('/api/products', async (req, res) => {
         .split(',')
         .map((value) => value.trim())
         .filter(Boolean)
-        .map((value) => new RegExp(escapeRegex(value), 'i'))
+        .map((value) => ({
+          material: {
+            $regex: escapeRegex(value),
+            $options: 'i'
+          }
+        }))
 
       if (materialFilters.length) {
-        filter.material = {
-          $in: materialFilters
-        }
+        appendAndCondition(filter, { $or: materialFilters })
       }
     }
 
@@ -122,6 +129,7 @@ app.post('/api/products', async (req, res) => {
       price,
       category,
       material,
+      description,
       image,
       stock
     } = req.body
@@ -137,6 +145,7 @@ app.post('/api/products', async (req, res) => {
       price,
       category,
       material,
+      description,
       image,
       stock
     })

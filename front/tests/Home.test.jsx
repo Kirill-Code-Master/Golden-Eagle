@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom/vitest'
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import Home from '../src/pages/Home.jsx'
 
@@ -19,47 +19,44 @@ afterEach(() => {
 })
 
 describe('Сторінка Home', () => {
-  it('показує товари, завантажені з API', async () => {
-    fetch.mockResolvedValueOnce(jsonResponse([
-      {
-        _id: '507f1f77bcf86cd799439011',
-        name: 'Каблучка тестова',
-        price: 2500,
-        category: 'Каблучки',
-        image: '',
-        stock: 2,
-      },
-    ]))
+  const renderHome = () => render(
+    <MemoryRouter>
+      <Home />
+    </MemoryRouter>
+  )
 
-    render(<Home />)
+  it('показує товари, завантажені з API', async () => {
+    fetch.mockResolvedValueOnce(jsonResponse({
+      products: [
+        {
+          _id: '507f1f77bcf86cd799439011',
+          name: 'Каблучка тестова',
+          price: 2500,
+          category: 'Каблучки',
+          image: '',
+          stock: 2,
+        },
+      ],
+    }))
+
+    renderHome()
 
     expect(await screen.findByText('Каблучка тестова')).toBeInTheDocument()
-    expect(screen.getByText('Знайдено товарів: 1')).toBeInTheDocument()
     expect(screen.getByText('2 500 ₴')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Переглянути' })).toHaveAttribute(
+      'href',
+      '/product/507f1f77bcf86cd799439011',
+    )
   })
 
-  it('показує результат 404 у панелі пошуку товару', async () => {
-    fetch.mockImplementation((url) => {
-      if (url === '/api/products') {
-        return Promise.resolve(jsonResponse([]))
-      }
+  it('залишає перехід до каталогу, якщо популярних товарів немає', async () => {
+    fetch.mockResolvedValueOnce(jsonResponse({ products: [] }))
 
-      return Promise.resolve(jsonResponse(
-        { message: 'Product not found' },
-        { ok: false, status: 404 },
-      ))
-    })
+    renderHome()
 
-    render(<Home />)
-
-    const user = userEvent.setup()
-    const input = await screen.findByPlaceholderText('MongoDB ObjectId (24 hex-символи)')
-
-    await user.clear(input)
-    await user.type(input, '507f1f77bcf86cd799439011')
-    await user.click(screen.getByRole('button', { name: /Знайти/ }))
-
-    expect(await screen.findByText('404 — Товар не знайдено', { selector: 'b' })).toBeInTheDocument()
-    expect(screen.getByText(/Жодного запису з ID/)).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'Дивитися весь каталог →' })).toHaveAttribute(
+      'href',
+      '/catalog',
+    )
   })
 })

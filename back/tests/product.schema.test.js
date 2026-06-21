@@ -7,6 +7,8 @@ describe('Значення схеми товару', () => {
       name: '  Каблучка  ',
       price: 0,
       category: '  Каблучки  ',
+      material: '  Срібло 999  ',
+      description: '  Опис товару  ',
       image: '  /ring.png  ',
     })
 
@@ -15,6 +17,8 @@ describe('Значення схеми товару', () => {
     expect(product.name).toBe('Каблучка')
     expect(product.price).toBe(0)
     expect(product.category).toBe('Каблучки')
+    expect(product.material).toBe('Срібло 999')
+    expect(product.description).toBe('Опис товару')
     expect(product.image).toBe('/ring.png')
     expect(product.stock).toBe(0)
   })

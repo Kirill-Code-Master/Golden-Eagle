@@ -10,7 +10,8 @@ export default function Home() {
     fetch('/api/products')
       .then(r => r.ok ? r.json() : [])
       .then(data => {
-        setProducts(data.slice(0, 4)); // Show only first 4 on home page
+        const list = Array.isArray(data) ? data : data.products || [];
+        setProducts(list.slice(0, 4)); // Show only first 4 on home page
         setLoading(false);
       })
       .catch(() => setLoading(false));

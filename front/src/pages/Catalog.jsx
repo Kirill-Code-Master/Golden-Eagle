@@ -29,30 +29,34 @@ export default function Catalog() {
   const [totalPages, setTotalPages] = useState(1)
 
   useEffect(() => {
-    const params = new URLSearchParams({
-      page,
-      limit: 20
-    })
-
-    if (search.trim()) params.append('search', search.trim())
-    if (sortBy) params.append('sortBy', sortBy)
-    if (sortBy) params.append('order', order)
-    if (category) params.append('category', category)
-    if (material) params.append('material', material)
-
-    setLoading(true)
-
-    fetch(`/api/products?${params.toString()}`)
-      .then(response => response.json())
-      .then(data => {
-        setProducts(data.products || [])
-        setTotalPages(data.totalPages || 1)
+    const timeoutId = window.setTimeout(() => {
+      const params = new URLSearchParams({
+        page,
+        limit: 20
       })
-      .catch(() => {
-        setProducts([])
-        setTotalPages(1)
-      })
-      .finally(() => setLoading(false))
+
+      if (search.trim()) params.append('search', search.trim())
+      if (sortBy) params.append('sortBy', sortBy)
+      if (sortBy) params.append('order', order)
+      if (category) params.append('category', category)
+      if (material) params.append('material', material)
+
+      setLoading(true)
+
+      fetch(`/api/products?${params.toString()}`)
+        .then(response => response.json())
+        .then(data => {
+          setProducts(data.products || [])
+          setTotalPages(data.totalPages || 1)
+        })
+        .catch(() => {
+          setProducts([])
+          setTotalPages(1)
+        })
+        .finally(() => setLoading(false))
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
   }, [page, search, sortBy, order, category, material])
 
   const resetFilters = () => {
@@ -69,6 +73,16 @@ export default function Catalog() {
       <h2 className="ge-stitle">Каталог виробів</h2>
 
       <div className="ge-filters">
+        <button
+          className="ge-filter-reset"
+          type="button"
+          onClick={resetFilters}
+          aria-label="Скинути фільтри"
+          title="Скинути фільтри"
+        >
+          ×
+        </button>
+
         <input
           className="ge-input"
           type="text"
@@ -143,9 +157,6 @@ export default function Catalog() {
           Спадання
         </button>
 
-        <button className="ge-btn-view" type="button" onClick={resetFilters}>
-          Скинути
-        </button>
       </div>
 
       {loading ? (
