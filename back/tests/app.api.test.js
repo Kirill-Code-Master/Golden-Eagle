@@ -35,8 +35,8 @@ afterAll(async () => {
   await mongoose.disconnect()
 })
 
-describe('Інтеграційні API-тести', () => {
-  it('повертає статус працездатності сервісу', async () => {
+describe('Інтеграційні API-тести товарів', () => {
+  it('перевіряє, що health endpoint відповідає 200 і повертає назву backend-сервісу', async () => {
     const res = await request(app).get('/api/health')
 
     expect(res.status).toBe(200)
@@ -46,7 +46,7 @@ describe('Інтеграційні API-тести', () => {
     })
   })
 
-  it('створює товар і читає його назад з MongoDB', async () => {
+  it('створює товар через API, знаходить його у списку і читає окремо за id з MongoDB', async () => {
     const product = makeProduct({
       name: 'Тестова каблучка API',
       price: 2500,
@@ -79,7 +79,41 @@ describe('Інтеграційні API-тести', () => {
     })
   })
 
-  it('фільтрує material за входженням у складний рядок', async () => {
+  it('шукає товари за текстом у вибраній категорії та повертає знайдені позиції за ціною від більшої до меншої', async () => {
+    const cheap = await Product.create(makeProduct({
+      name: 'Каблучка для пошуку срібна',
+      price: 1200,
+      material: 'Срібло 925',
+    }))
+
+    const expensive = await Product.create(makeProduct({
+      name: 'Каблучка для пошуку золота',
+      price: 5400,
+      material: 'Золото 585',
+    }))
+
+    await Product.create(makeProduct({
+      name: 'Ланцюжок поза пошуком',
+      price: 9900,
+      material: 'Золото 750',
+    }))
+
+    const res = await request(app).get('/api/products').query({
+      category: TEST_CATEGORY,
+      search: 'каблучка',
+      sortBy: 'price',
+      order: 'desc',
+    })
+
+    expect(res.status).toBe(200)
+    expect(res.body.total).toBe(2)
+    expect(res.body.products.map((item) => item._id)).toEqual([
+      expensive._id.toString(),
+      cheap._id.toString(),
+    ])
+  })
+
+  it('фільтрує material за частиною складного рядка, щоб Срібло знаходилося всередині опису матеріалів', async () => {
     const target = await Product.create(makeProduct({
       name: 'Складний матеріал',
       material: 'Срібло 999, золото 585, сапфір 1,2',
@@ -101,7 +135,7 @@ describe('Інтеграційні API-тести', () => {
     expect(res.body.products.map((item) => item._id)).toEqual([target._id.toString()])
   })
 
-  it('оновлює та видаляє товар', async () => {
+  it('оновлює назву і ціну товару, видаляє його та після видалення отримує 404 за тим самим id', async () => {
     const product = await Product.create(makeProduct({ name: 'До оновлення' }))
 
     const updateRes = await request(app)
@@ -123,7 +157,7 @@ describe('Інтеграційні API-тести', () => {
     expect(getDeletedRes.status).toBe(404)
   })
 
-  it('повертає прості відповіді валідації та відсутнього товару', async () => {
+  it('повертає зрозумілі помилки для створення без назви та для запиту неіснуючого товару', async () => {
     const badCreateRes = await request(app).post('/api/products').send({ price: 100 })
     const missingId = new mongoose.Types.ObjectId().toString()
     const missingProductRes = await request(app).get(`/api/products/${missingId}`)

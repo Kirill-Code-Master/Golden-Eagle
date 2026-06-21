@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import Product from '../src/product.js'
 
-describe('Значення схеми товару', () => {
-  it('обрізає пробіли в текстових полях і застосовує значення за замовчуванням', async () => {
+describe('Схема товару в MongoDB', () => {
+  it('прибирає зайві пробіли в назві, категорії, матеріалі, описі та зображенні, а stock ставить 0 за замовчуванням', async () => {
     const product = new Product({
       name: '  Каблучка  ',
       price: 0,
@@ -23,7 +23,7 @@ describe('Значення схеми товару', () => {
     expect(product.stock).toBe(0)
   })
 
-  it('відхиляє відʼємні значення ціни та залишку', async () => {
+  it('не дозволяє зберегти товар з відʼємною ціною або відʼємним залишком на складі', async () => {
     const product = new Product({
       name: 'Некоректні значення',
       price: -1,

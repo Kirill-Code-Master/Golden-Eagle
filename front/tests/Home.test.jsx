@@ -18,14 +18,14 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-describe('Сторінка Home', () => {
+describe('Головна сторінка Home', () => {
   const renderHome = () => render(
     <MemoryRouter>
       <Home />
     </MemoryRouter>
   )
 
-  it('показує товари, завантажені з API', async () => {
+  it('показує товар з головної добірки API з назвою, ціною та посиланням на сторінку деталей', async () => {
     fetch.mockResolvedValueOnce(jsonResponse({
       products: [
         {
@@ -49,7 +49,7 @@ describe('Сторінка Home', () => {
     )
   })
 
-  it('залишає перехід до каталогу, якщо популярних товарів немає', async () => {
+  it('показує посилання на повний каталог, коли API повертає порожній список товарів для головної сторінки', async () => {
     fetch.mockResolvedValueOnce(jsonResponse({ products: [] }))
 
     renderHome()
