@@ -47,7 +47,11 @@ describe('Інтеграційні API-тести', () => {
   })
 
   it('створює товар і читає його назад з MongoDB', async () => {
-    const product = makeProduct({ name: 'Тестова каблучка API', price: 2500 })
+    const product = makeProduct({
+      name: 'Тестова каблучка API',
+      price: 2500,
+      description: 'Детальний опис тестового товару',
+    })
 
     const createRes = await request(app).post('/api/products').send(product)
 
@@ -56,11 +60,12 @@ describe('Інтеграційні API-тести', () => {
       name: product.name,
       price: product.price,
       category: TEST_CATEGORY,
+      description: product.description,
       stock: product.stock,
     })
 
     const listRes = await request(app).get('/api/products')
-    const createdFromList = listRes.body.find((item) => item._id === createRes.body._id)
+    const createdFromList = listRes.body.products.find((item) => item._id === createRes.body._id)
 
     expect(listRes.status).toBe(200)
     expect(createdFromList).toMatchObject({ name: product.name })
@@ -68,7 +73,32 @@ describe('Інтеграційні API-тести', () => {
     const singleRes = await request(app).get(`/api/products/${createRes.body._id}`)
 
     expect(singleRes.status).toBe(200)
-    expect(singleRes.body).toMatchObject({ name: product.name })
+    expect(singleRes.body).toMatchObject({
+      name: product.name,
+      description: product.description,
+    })
+  })
+
+  it('фільтрує material за входженням у складний рядок', async () => {
+    const target = await Product.create(makeProduct({
+      name: 'Складний матеріал',
+      material: 'Срібло 999, золото 585, сапфір 1,2',
+    }))
+
+    await Product.create(makeProduct({
+      name: 'Інший матеріал',
+      material: 'Платина 950',
+    }))
+
+    const res = await request(app).get('/api/products').query({
+      category: TEST_CATEGORY,
+      material: 'Срібло',
+      sortBy: 'name',
+      order: 'asc',
+    })
+
+    expect(res.status).toBe(200)
+    expect(res.body.products.map((item) => item._id)).toEqual([target._id.toString()])
   })
 
   it('оновлює та видаляє товар', async () => {

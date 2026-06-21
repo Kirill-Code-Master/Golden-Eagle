@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { addProductToCart } from '../lib/cart';
 
 const CAT_ICON = {
   'Каблучки': '💍',
@@ -13,7 +14,14 @@ const CAT_ICON = {
 
 export default function ProductCard({ product }) {
   const [imgBroken, setImgBroken] = useState(false);
+  const [added, setAdded] = useState(false);
   const icon = CAT_ICON[product.category] ?? '💎';
+
+  const handleAddToCart = () => {
+    addProductToCart(product._id);
+    setAdded(true);
+    window.setTimeout(() => setAdded(false), 1400);
+  };
 
   return (
     <article className="ge-card">
@@ -31,11 +39,23 @@ export default function ProductCard({ product }) {
       <div className="ge-card__body">
         <span className="ge-tag">{icon} {product.category}</span>
         <h3 className="ge-card__name">{product.name}</h3>
+        {product.material && (
+          <p className="ge-card__material">{product.material}</p>
+        )}
         <div className="ge-card__footer">
           <span className="ge-price">{product.price.toLocaleString('uk-UA')} ₴</span>
-          <Link to={`/product/${product._id}`} className="ge-btn-view">
-            Переглянути
-          </Link>
+          <div className="ge-card__actions">
+            <button className="ge-btn-view" type="button" onClick={handleAddToCart}>
+              {added ? 'Додано' : 'В кошик'}
+            </button>
+            <Link
+              to={`/product/${product._id}`}
+              state={{ product }}
+              className="ge-btn-view"
+            >
+              Переглянути
+            </Link>
+          </div>
         </div>
       </div>
     </article>
