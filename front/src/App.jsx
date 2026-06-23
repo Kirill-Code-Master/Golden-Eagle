@@ -5,6 +5,8 @@ import Home from './pages/Home';
 import Catalog from './pages/Catalog';
 import Cart from './pages/Cart';
 import ProductDetails from './pages/ProductDetails';
+import Auth from './pages/Auth';
+import OrderInfo from './pages/OrderInfo';
 import './pages/Home.css';
 
 function App() {
@@ -17,6 +19,9 @@ function App() {
           <Route path="/catalog" element={<Catalog />} />
           <Route path="/product/:id" element={<ProductDetails />} />
           <Route path="/cart" element={<Cart />} />
+          <Route path="/login" element={<Auth mode="login" />} />
+          <Route path="/register" element={<Auth mode="register" />} />
+          <Route path="/order-info" element={<OrderInfo />} />
         </Routes>
       </main>
       <Footer />

@@ -490,6 +490,14 @@ button {
   font-size: .9rem;
 }
 
+.ge-checkout-note--error {
+  color: #f28b82;
+}
+
+.ge-checkout-note--success {
+  color: #81c784;
+}
+
 .ge-filters {
   display: flex;
   gap: 1rem;

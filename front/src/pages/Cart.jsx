@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   getCartItems,
   removeProductFromCart,
   updateCartItemQuantity,
+  clearCart,
 } from '../lib/cart'
+import { getCurrentUser, getAuthHeaders } from '../lib/auth'
 
 const formatPrice = (price) => Number(price || 0).toLocaleString('uk-UA')
 
@@ -37,9 +39,20 @@ function CartProductThumb({ product, icon }) {
 }
 
 export default function Cart() {
+  const navigate = useNavigate()
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
+  const [user, setUser] = useState(() => getCurrentUser())
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const [checkoutError, setCheckoutError] = useState('')
+  const [checkoutSuccess, setCheckoutSuccess] = useState('')
+
+  useEffect(() => {
+    const handleAuthChange = () => setUser(getCurrentUser())
+    window.addEventListener('golden-eagle-auth-change', handleAuthChange)
+    return () => window.removeEventListener('golden-eagle-auth-change', handleAuthChange)
+  }, [])
 
   const loadCart = useCallback(() => {
     const cartItems = getCartItems()
@@ -105,6 +118,21 @@ export default function Cart() {
   const handleRemove = (productId) => {
     removeProductFromCart(productId)
     setRows(prevRows => prevRows.filter(row => row.productId !== productId))
+  }
+
+  const handleCheckout = () => {
+    setCheckoutError('')
+    setCheckoutSuccess('')
+
+    if (!user) {
+      setCheckoutError('Для оформлення замовлення, будь ласка, увійдіть або зареєструйтеся.')
+      setCheckoutOpen(true)
+      return
+    }
+
+    // Clear cart locally and redirect to info placeholder page
+    clearCart()
+    navigate('/order-info')
   }
 
   if (loading) {
@@ -216,14 +244,23 @@ export default function Cart() {
             <button
               className="ge-btn-view ge-btn-view--primary ge-cart-summary__checkout"
               type="button"
-              disabled={availableRows.length === 0}
-              onClick={() => setCheckoutOpen(true)}
+              disabled={availableRows.length === 0 || checkoutLoading}
+              onClick={handleCheckout}
             >
-              Оформити замовлення
+              {checkoutLoading ? 'Оформлення...' : 'Оформити замовлення'}
             </button>
-            {checkoutOpen && (
-              <div className="ge-checkout-note" role="status">
-                Оформлення замовлення буде додано пізніше. Кошик уже готовий передати актуальні товари та суму.
+            {checkoutOpen && checkoutError && (
+              <div className="ge-checkout-note ge-checkout-note--error" role="status">
+                {checkoutError}{' '}
+                <div style={{ marginTop: '0.6rem', display: 'flex', gap: '0.5rem' }}>
+                  <Link to="/login" className="ge-btn-view" style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}>Увійти</Link>
+                  <Link to="/register" className="ge-btn-view ge-btn-view--primary" style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}>Реєстрація</Link>
+                </div>
+              </div>
+            )}
+            {checkoutOpen && checkoutSuccess && (
+              <div className="ge-checkout-note ge-checkout-note--success" role="status">
+                {checkoutSuccess}
               </div>
             )}
           </aside>

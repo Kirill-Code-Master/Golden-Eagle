@@ -1,21 +1,26 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { getCartCount } from '../lib/cart';
+import { getCurrentUser, clearSession } from '../lib/auth';
 import logo from '../images/logo_golden-eagle.png';
 import './Header.css';
 
 export default function Header() {
   const [cartCount, setCartCount] = useState(() => getCartCount());
+  const [user, setUser] = useState(() => getCurrentUser());
 
   useEffect(() => {
     const updateCartCount = () => setCartCount(getCartCount());
+    const handleAuthChange = () => setUser(getCurrentUser());
 
     window.addEventListener('golden-eagle-cart-change', updateCartCount);
     window.addEventListener('storage', updateCartCount);
+    window.addEventListener('golden-eagle-auth-change', handleAuthChange);
 
     return () => {
       window.removeEventListener('golden-eagle-cart-change', updateCartCount);
       window.removeEventListener('storage', updateCartCount);
+      window.removeEventListener('golden-eagle-auth-change', handleAuthChange);
     };
   }, []);
 
@@ -47,6 +52,27 @@ export default function Header() {
               <span className="ge-cart-link__count">{cartCount}</span>
             )}
           </Link>
+
+          {user ? (
+            <div className="ge-user-info">
+              <span className="ge-user-name" title={`Роль: ${user.role}`}>
+                👤 {user.username}
+                {user.role === 'admin' && <span className="ge-badge-admin">Admin</span>}
+              </span>
+              <button 
+                type="button" 
+                onClick={() => clearSession()}
+                className="ge-btn-logout"
+              >
+                Вийти
+              </button>
+            </div>
+          ) : (
+            <div className="ge-auth-buttons">
+              <Link to="/login" className="ge-btn-login">Увійти</Link>
+              <Link to="/register" className="ge-btn-register">Реєстрація</Link>
+            </div>
+          )}
         </div>
       </div>
     </header>

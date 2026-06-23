@@ -4,8 +4,11 @@ import request from 'supertest'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 import app from '../src/app.js'
 import Product from '../src/product.js'
+import User from '../src/user.js'
+import { generateToken } from '../src/token.js'
 
 const TEST_CATEGORY = '__test__'
+let adminToken = ''
 
 const makeProduct = (overrides = {}) => ({
   name: `Тестовий товар ${Date.now()}`,
@@ -24,14 +27,27 @@ beforeAll(async () => {
   if (mongoose.connection.readyState === 0) {
     await mongoose.connect(process.env.DATABASE_URL)
   }
+
+  let admin = await User.findOne({ username: 'admin' })
+  if (!admin) {
+    admin = new User({
+      username: 'admin',
+      password: 'hashedpassword',
+      role: 'admin'
+    })
+    await admin.save()
+  }
+  adminToken = generateToken(admin)
 })
 
 afterEach(async () => {
   await Product.deleteMany({ category: TEST_CATEGORY })
+  await User.deleteMany({ username: /^test_/ })
 })
 
 afterAll(async () => {
   await Product.deleteMany({ category: TEST_CATEGORY })
+  await User.deleteMany({ username: /^test_/ })
   await mongoose.disconnect()
 })
 
@@ -53,7 +69,10 @@ describe('Інтеграційні API-тести товарів', () => {
       description: 'Детальний опис тестового товару',
     })
 
-    const createRes = await request(app).post('/api/products').send(product)
+    const createRes = await request(app)
+      .post('/api/products')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send(product)
 
     expect(createRes.status).toBe(201)
     expect(createRes.body).toMatchObject({
@@ -140,6 +159,7 @@ describe('Інтеграційні API-тести товарів', () => {
 
     const updateRes = await request(app)
       .put(`/api/products/${product._id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
       .send({ name: 'Після оновлення', price: 3000 })
 
     expect(updateRes.status).toBe(200)
@@ -148,7 +168,9 @@ describe('Інтеграційні API-тести товарів', () => {
       price: 3000,
     })
 
-    const deleteRes = await request(app).delete(`/api/products/${product._id}`)
+    const deleteRes = await request(app)
+      .delete(`/api/products/${product._id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
 
     expect(deleteRes.status).toBe(204)
 
@@ -158,7 +180,10 @@ describe('Інтеграційні API-тести товарів', () => {
   })
 
   it('повертає зрозумілі помилки для створення без назви та для запиту неіснуючого товару', async () => {
-    const badCreateRes = await request(app).post('/api/products').send({ price: 100 })
+    const badCreateRes = await request(app)
+      .post('/api/products')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ price: 100 })
     const missingId = new mongoose.Types.ObjectId().toString()
     const missingProductRes = await request(app).get(`/api/products/${missingId}`)
 
@@ -166,5 +191,104 @@ describe('Інтеграційні API-тести товарів', () => {
     expect(badCreateRes.body).toEqual({ message: 'name and price are required' })
     expect(missingProductRes.status).toBe(404)
     expect(missingProductRes.body).toEqual({ message: 'Product not found' })
+  })
+
+  describe('Тести авторизації та ролей', () => {
+    it('реєструє нового користувача та успішно логіниться під ним', async () => {
+      const username = `test_user_${Date.now()}`
+      const password = 'testpassword123'
+
+      const registerRes = await request(app)
+        .post('/api/auth/register')
+        .send({ username, password })
+
+      expect(registerRes.status).toBe(201)
+      expect(registerRes.body.user).toMatchObject({
+        username,
+        role: 'user',
+      })
+
+      const loginRes = await request(app)
+        .post('/api/auth/login')
+        .send({ username, password })
+
+      expect(loginRes.status).toBe(200)
+      expect(loginRes.body).toHaveProperty('token')
+      expect(loginRes.body.user).toMatchObject({
+        username,
+        role: 'user',
+      })
+    })
+
+    it('забороняє реєстрацію з ім’ям користувача, що вже існує', async () => {
+      const username = `test_user_duplicate`
+      const password = 'testpassword123'
+
+      // Register first time
+      await request(app)
+        .post('/api/auth/register')
+        .send({ username, password })
+
+      // Register second time
+      const duplicateRes = await request(app)
+        .post('/api/auth/register')
+        .send({ username, password })
+
+      expect(duplicateRes.status).toBe(400)
+      expect(duplicateRes.body.message).toBe('Користувач з таким ім’ям вже існує.')
+    })
+
+    it('забороняє створювати або редагувати товари без токена або з роллю user', async () => {
+      const product = makeProduct({ name: 'Спроба взлому' })
+
+      // Unregistered user attempt
+      const unregRes = await request(app)
+        .post('/api/products')
+        .send(product)
+      expect(unregRes.status).toBe(403)
+
+      // Registered user attempt
+      const tempUser = await User.create({
+        username: `test_user_${Date.now()}`,
+        password: 'password123',
+        role: 'user',
+      })
+      const userToken = generateToken(tempUser)
+
+      const regUserRes = await request(app)
+        .post('/api/products')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send(product)
+      expect(regUserRes.status).toBe(403)
+    })
+
+    it('дозволяє оформляти замовлення зареєстрованому користувачу, але забороняє незареєстрованому', async () => {
+      const items = [{ productId: new mongoose.Types.ObjectId().toString(), quantity: 2 }]
+
+      // Unregistered user attempt
+      const unregRes = await request(app)
+        .post('/api/orders')
+        .send({ items })
+      expect(unregRes.status).toBe(401)
+
+      // Registered user attempt
+      const tempUser = await User.create({
+        username: `test_user_${Date.now()}`,
+        password: 'password123',
+        role: 'user',
+      })
+      const userToken = generateToken(tempUser)
+
+      const regUserRes = await request(app)
+        .post('/api/orders')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ items })
+
+      expect(regUserRes.status).toBe(200)
+      expect(regUserRes.body).toMatchObject({
+        success: true,
+        message: 'Замовлення успішно оформлено! Дякуємо за покупку.',
+      })
+    })
   })
 })
