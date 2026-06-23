@@ -85,3 +85,84 @@
   font-weight: 600;
   color: var(--gold);
 }
+
+.ge-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.ge-auth-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.ge-btn-login {
+  color: var(--text-color);
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: color 0.2s;
+  padding: 0.4rem 0.6rem;
+}
+
+.ge-btn-login:hover {
+  color: var(--gold);
+}
+
+.ge-btn-register {
+  background: var(--gold-very-dim);
+  border: 1px solid rgba(201, 168, 76, 0.4);
+  color: var(--gold);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.4rem 0.9rem;
+  border-radius: 18px;
+  transition: all 0.2s;
+}
+
+.ge-btn-register:hover {
+  background: var(--gold);
+  color: var(--bg-color);
+  border-color: var(--gold);
+}
+
+.ge-user-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ge-user-name {
+  font-size: 0.85rem;
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.ge-badge-admin {
+  background: rgba(201, 168, 76, 0.15);
+  color: var(--gold);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  font-size: 0.65rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.ge-btn-logout {
+  background: transparent;
+  border: none;
+  color: #d9b879;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.4rem 0.6rem;
+  transition: color 0.2s;
+}
+
+.ge-btn-logout:hover {
+  color: #f28b82;
+}

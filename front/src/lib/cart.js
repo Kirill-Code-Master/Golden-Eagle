@@ -66,3 +66,7 @@ export const removeProductFromCart = (productId) => {
   const items = getCartItems().filter(item => item.productId !== productId)
   return writeCart(items)
 }
+
+export const clearCart = () => {
+  return writeCart([])
+}

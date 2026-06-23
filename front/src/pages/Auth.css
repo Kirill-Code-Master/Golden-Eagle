@@ -1,0 +1,136 @@
+.ge-auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 280px);
+  padding: 2rem 1.5rem;
+}
+
+.ge-auth-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 440px;
+  padding: 2.5rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.ge-auth-card:hover {
+  border-color: rgba(201, 168, 76, 0.25);
+  box-shadow: 0 25px 60px rgba(201, 168, 76, 0.05), 0 20px 50px rgba(0, 0, 0, 0.7);
+}
+
+.ge-auth-tabs {
+  display: flex;
+  border-bottom: 1px solid rgba(201, 168, 76, 0.15);
+  margin-bottom: 2rem;
+  gap: 1.5rem;
+}
+
+.ge-auth-tab {
+  background: none;
+  border: none;
+  color: var(--gold-dim);
+  font-size: 1.15rem;
+  font-weight: 500;
+  padding: 0.5rem 0.25rem 0.75rem 0.25rem;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s;
+}
+
+.ge-auth-tab:hover {
+  color: var(--text-color);
+}
+
+.ge-auth-tab.active {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.ge-auth-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--gold);
+  border-radius: 2px;
+  box-shadow: 0 0 10px var(--gold);
+}
+
+.ge-auth-alert {
+  padding: 0.85rem 1rem;
+  border-radius: 6px;
+  margin-bottom: 1.5rem;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.ge-auth-error {
+  background: rgba(217, 83, 79, 0.1);
+  border: 1px solid rgba(217, 83, 79, 0.3);
+  color: #f28b82;
+}
+
+.ge-auth-success {
+  background: rgba(40, 167, 69, 0.1);
+  border: 1px solid rgba(40, 167, 69, 0.3);
+  color: #81c784;
+}
+
+.ge-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.ge-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ge-form-group label {
+  font-size: 0.85rem;
+  color: var(--gold-dim);
+  letter-spacing: 0.05em;
+}
+
+.ge-form-group .ge-input {
+  background: #17140c;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-color);
+  padding: 0.8rem 1rem;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+
+.ge-form-group .ge-input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 8px rgba(201, 168, 76, 0.15);
+}
+
+.ge-form-group .ge-input.error {
+  border-color: #d9534f;
+  box-shadow: 0 0 8px rgba(217, 83, 79, 0.15);
+}
+
+.ge-error-text {
+  color: #f28b82;
+  font-size: 0.78rem;
+  margin-top: 0.15rem;
+}
+
+.ge-auth-submit {
+  width: 100%;
+  padding: 0.8rem !important;
+  font-size: 0.95rem !important;
+  margin-top: 0.5rem;
+}
