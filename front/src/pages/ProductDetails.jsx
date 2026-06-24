@@ -263,19 +263,15 @@ export default function ProductDetails() {
 
               <div className="ge-form-group" style={{ marginBottom: '1rem' }}>
                 <label htmlFor="editMaterial">Матеріал</label>
-                <select
+                <input
                   id="editMaterial"
-                  className="ge-select"
+                  type="text"
+                  className="ge-input"
                   value={editMaterial}
                   onChange={e => setEditMaterial(e.target.value)}
                   disabled={saveLoading}
-                  style={{ width: '100%' }}
-                >
-                  <option value="">Уточнюється</option>
-                  <option value="Золото">Золото</option>
-                  <option value="Срібло">Срібло</option>
-                  <option value="Платина">Платина</option>
-                </select>
+                  placeholder="Наприклад: золото 585, фіаніт"
+                />
               </div>
 
               <div className="ge-form-group" style={{ marginBottom: '1rem' }}>

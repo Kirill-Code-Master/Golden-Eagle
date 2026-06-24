@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import ProductCard from '../components/ProductCard'
 import { getCurrentUser, getAuthHeaders } from '../lib/auth'
 
@@ -18,7 +18,28 @@ const materials = [
   'Платина'
 ]
 
+const emptyProductForm = {
+  name: '',
+  price: 0,
+  category: '',
+  material: '',
+  description: '',
+  image: '',
+  stock: 0
+}
+
+const toProductForm = (product = emptyProductForm) => ({
+  name: product.name || '',
+  price: product.price ?? 0,
+  category: product.category || '',
+  material: product.material || '',
+  description: product.description || '',
+  image: product.image || '',
+  stock: product.stock ?? 0
+})
+
 export default function Catalog() {
+  const formRef = useRef(null)
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -30,16 +51,15 @@ export default function Catalog() {
   const [totalPages, setTotalPages] = useState(1)
 
   const [user, setUser] = useState(() => getCurrentUser())
-  const [isAdding, setIsAdding] = useState(false)
-  const [addName, setAddName] = useState('')
-  const [addPrice, setAddPrice] = useState(0)
-  const [addCategory, setAddCategory] = useState('')
-  const [addMaterial, setAddMaterial] = useState('')
-  const [addDescription, setAddDescription] = useState('')
-  const [addImage, setAddImage] = useState('')
-  const [addStock, setAddStock] = useState(0)
-  const [addError, setAddError] = useState('')
+  const [formMode, setFormMode] = useState(null)
+  const [editingProductId, setEditingProductId] = useState(null)
+  const [productForm, setProductForm] = useState(emptyProductForm)
+  const [formError, setFormError] = useState('')
   const [saveLoading, setSaveLoading] = useState(false)
+  const [adminToast, setAdminToast] = useState('')
+
+  const isAdmin = user?.role === 'admin'
+  const isFormVisible = formMode === 'create' || formMode === 'edit'
 
   useEffect(() => {
     const handleAuthChange = () => setUser(getCurrentUser())
@@ -47,49 +67,125 @@ export default function Catalog() {
     return () => window.removeEventListener('golden-eagle-auth-change', handleAuthChange)
   }, [])
 
-  const handleAddProduct = async (e) => {
-    e.preventDefault()
-    setAddError('')
+  useEffect(() => {
+    if (!adminToast) return undefined
 
-    if (!addName.trim() || addPrice < 0) {
-      setAddError('Назва обов’язкова, ціна має бути невід’ємною.')
+    const timeoutId = window.setTimeout(() => setAdminToast(''), 2600)
+    return () => window.clearTimeout(timeoutId)
+  }, [adminToast])
+
+  const showAdminToast = (message) => {
+    if (isAdmin) setAdminToast(message)
+  }
+
+  const updateProductForm = (field, value) => {
+    setProductForm(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
+
+  const resetProductForm = () => {
+    setProductForm(emptyProductForm)
+    setEditingProductId(null)
+    setFormMode(null)
+    setFormError('')
+  }
+
+  const startCreating = () => {
+    if (formMode === 'create') {
+      resetProductForm()
+      return
+    }
+
+    setProductForm(emptyProductForm)
+    setEditingProductId(null)
+    setFormError('')
+    setFormMode('create')
+    window.setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)
+  }
+
+  const startEditing = (product) => {
+    setProductForm(toProductForm(product))
+    setEditingProductId(product._id)
+    setFormError('')
+    setFormMode('edit')
+    window.setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)
+  }
+
+  const getProductPayload = () => ({
+    name: productForm.name.trim(),
+    price: Number(productForm.price),
+    category: productForm.category.trim(),
+    material: productForm.material.trim(),
+    description: productForm.description.trim(),
+    image: productForm.image.trim(),
+    stock: Number(productForm.stock)
+  })
+
+  const handleSaveProduct = async (event) => {
+    event.preventDefault()
+    setFormError('')
+
+    const payload = getProductPayload()
+    if (!payload.name || payload.price < 0 || payload.stock < 0) {
+      setFormError('Назва обов’язкова, ціна та кількість на складі мають бути невід’ємними.')
       return
     }
 
     setSaveLoading(true)
     try {
-      const response = await fetch('/api/products', {
-        method: 'POST',
+      const isEditing = formMode === 'edit'
+      const response = await fetch(isEditing ? `/api/products/${editingProductId}` : '/api/products', {
+        method: isEditing ? 'PUT' : 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({
-          name: addName.trim(),
-          price: Number(addPrice),
-          category: addCategory.trim(),
-          material: addMaterial.trim(),
-          description: addDescription.trim(),
-          image: addImage.trim(),
-          stock: Number(addStock)
-        })
+        body: JSON.stringify(payload)
       })
 
       const data = await response.json()
       if (!response.ok) {
-        throw new Error(data.message || 'Не вдалося додати новий виріб.')
+        throw new Error(data.message || (isEditing ? 'Не вдалося зберегти зміни.' : 'Не вдалося додати новий виріб.'))
       }
 
-      setAddName('')
-      setAddPrice(0)
-      setAddCategory('')
-      setAddMaterial('')
-      setAddDescription('')
-      setAddImage('')
-      setAddStock(0)
-      setIsAdding(false)
+      setProducts(prev => {
+        if (isEditing) {
+          return prev.map(product => product._id === data._id ? data : product)
+        }
+        return [data, ...prev]
+      })
 
-      setPage(1)
-      setProducts(prev => [data, ...prev])
+      if (!isEditing) setPage(1)
+      resetProductForm()
+      showAdminToast(isEditing ? 'Товар успішно відредаговано.' : 'Товар успішно створено.')
     } catch (err) {
-      setAddError(err.message)
+      setFormError(err.message)
+    } finally {
+      setSaveLoading(false)
+    }
+  }
+
+  const handleDeleteProduct = async () => {
+    if (!editingProductId) return
+    if (!window.confirm('Ви впевнені, що хочете видалити цей виріб?')) return
+
+    setSaveLoading(true)
+    setFormError('')
+    try {
+      const response = await fetch(`/api/products/${editingProductId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.message || 'Не вдалося видалити виріб.')
+      }
+
+      setProducts(prev => prev.filter(product => product._id !== editingProductId))
+      resetProductForm()
+      showAdminToast('Товар успішно видалено.')
+    } catch (err) {
+      setFormError(err.message)
     } finally {
       setSaveLoading(false)
     }
@@ -137,124 +233,129 @@ export default function Catalog() {
 
   return (
     <div className="ge-container">
-      <div className="ge-catalog-title-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid rgba(201,168,76,.1)', marginBottom: '1.25rem', paddingBottom: '0.75rem' }}>
-        <h2 className="ge-stitle" style={{ margin: 0, border: 'none', padding: 0 }}>Каталог виробів</h2>
-        {user && user.role === 'admin' && (
-          <button 
-            type="button" 
-            className="ge-btn-view" 
-            onClick={() => setIsAdding(!isAdding)}
-            style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
+      <div className="ge-catalog-title-bar">
+        <h2 className="ge-stitle">Каталог виробів</h2>
+        {isAdmin && (
+          <button
+            type="button"
+            className="ge-btn-view ge-catalog-add"
+            onClick={startCreating}
           >
-            {isAdding ? 'Скасувати' : 'Додати виріб'}
+            {formMode === 'create' ? 'Скасувати' : 'Додати виріб'}
           </button>
         )}
       </div>
 
-      {isAdding && (
-        <form onSubmit={handleAddProduct} className="ge-state-box" style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <h3 className="ge-stitle" style={{ borderBottom: 'none', marginBottom: '0.5rem', paddingBottom: 0 }}>Новий виріб</h3>
-          {addError && <div className="ge-auth-error ge-auth-alert" style={{ marginBottom: '0.5rem' }}>⚠️ {addError}</div>}
-          
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
+      {isFormVisible && (
+        <form ref={formRef} onSubmit={handleSaveProduct} className="ge-state-box ge-admin-product-form">
+          <h3 className="ge-stitle">{formMode === 'edit' ? 'Редагування виробу' : 'Новий виріб'}</h3>
+          {formError && <div className="ge-auth-error ge-auth-alert">⚠️ {formError}</div>}
+
+          <div className="ge-admin-product-form__grid">
             <div className="ge-form-group">
-              <label htmlFor="addName">Назва</label>
+              <label htmlFor="productName">Назва</label>
               <input
-                id="addName"
+                id="productName"
                 type="text"
                 className="ge-input"
-                value={addName}
-                onChange={e => setAddName(e.target.value)}
+                value={productForm.name}
+                onChange={event => updateProductForm('name', event.target.value)}
                 disabled={saveLoading}
                 required
               />
             </div>
-            
+
             <div className="ge-form-group">
-              <label htmlFor="addPrice">Ціна (₴)</label>
+              <label htmlFor="productPrice">Ціна (₴)</label>
               <input
-                id="addPrice"
+                id="productPrice"
                 type="number"
                 min="0"
                 className="ge-input"
-                value={addPrice}
-                onChange={e => setAddPrice(e.target.value)}
+                value={productForm.price}
+                onChange={event => updateProductForm('price', event.target.value)}
                 disabled={saveLoading}
                 required
               />
             </div>
 
             <div className="ge-form-group">
-              <label htmlFor="addCategory">Категорія</label>
+              <label htmlFor="productCategory">Категорія</label>
               <select
-                id="addCategory"
+                id="productCategory"
                 className="ge-select"
-                value={addCategory}
-                onChange={e => setAddCategory(e.target.value)}
+                value={productForm.category}
+                onChange={event => updateProductForm('category', event.target.value)}
                 disabled={saveLoading}
-                style={{ width: '100%' }}
               >
                 <option value="">Без категорії</option>
-                {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                {categories.map(item => <option key={item} value={item}>{item}</option>)}
               </select>
             </div>
 
             <div className="ge-form-group">
-              <label htmlFor="addMaterial">Матеріал</label>
-              <select
-                id="addMaterial"
-                className="ge-select"
-                value={addMaterial}
-                onChange={e => setAddMaterial(e.target.value)}
-                disabled={saveLoading}
-                style={{ width: '100%' }}
-              >
-                <option value="">Уточнюється</option>
-                {materials.map(m => <option key={m} value={m}>{m}</option>)}
-              </select>
-            </div>
-
-            <div className="ge-form-group">
-              <label htmlFor="addImage">Посилання на зображення</label>
+              <label htmlFor="productMaterial">Матеріал</label>
               <input
-                id="addImage"
+                id="productMaterial"
                 type="text"
                 className="ge-input"
-                value={addImage}
-                onChange={e => setAddImage(e.target.value)}
+                value={productForm.material}
+                onChange={event => updateProductForm('material', event.target.value)}
+                disabled={saveLoading}
+                placeholder="Наприклад: золото 585, фіаніт"
+              />
+            </div>
+
+            <div className="ge-form-group">
+              <label htmlFor="productImage">Посилання на зображення</label>
+              <input
+                id="productImage"
+                type="text"
+                className="ge-input"
+                value={productForm.image}
+                onChange={event => updateProductForm('image', event.target.value)}
                 disabled={saveLoading}
                 placeholder="https://..."
               />
             </div>
 
             <div className="ge-form-group">
-              <label htmlFor="addStock">Кількість на складі</label>
+              <label htmlFor="productStock">Кількість на складі</label>
               <input
-                id="addStock"
+                id="productStock"
                 type="number"
                 min="0"
                 className="ge-input"
-                value={addStock}
-                onChange={e => setAddStock(e.target.value)}
+                value={productForm.stock}
+                onChange={event => updateProductForm('stock', event.target.value)}
                 disabled={saveLoading}
               />
             </div>
           </div>
 
           <div className="ge-form-group">
-            <label htmlFor="addDescription">Опис</label>
+            <label htmlFor="productDescription">Опис</label>
             <textarea
-              id="addDescription"
+              id="productDescription"
               className="ge-input"
               rows="3"
-              value={addDescription}
-              onChange={e => setAddDescription(e.target.value)}
+              value={productForm.description}
+              onChange={event => updateProductForm('description', event.target.value)}
               disabled={saveLoading}
-              style={{ resize: 'vertical', fontFamily: 'inherit' }}
             />
           </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+          <div className="ge-admin-product-form__actions">
+            {formMode === 'edit' && (
+              <button
+                className="ge-btn-view ge-btn-view--danger"
+                type="button"
+                onClick={handleDeleteProduct}
+                disabled={saveLoading}
+              >
+                Видалити
+              </button>
+            )}
             <button
               className="ge-btn-view ge-btn-view--primary"
               type="submit"
@@ -265,7 +366,7 @@ export default function Catalog() {
             <button
               className="ge-btn-view"
               type="button"
-              onClick={() => setIsAdding(false)}
+              onClick={resetProductForm}
               disabled={saveLoading}
             >
               Скасувати
@@ -358,7 +459,6 @@ export default function Catalog() {
         >
           Спадання
         </button>
-
       </div>
 
       {loading ? (
@@ -367,7 +467,12 @@ export default function Catalog() {
         <>
           <div className="ge-grid">
             {products.map(product => (
-              <ProductCard key={product._id} product={product} />
+              <ProductCard
+                key={product._id}
+                product={product}
+                isAdmin={isAdmin}
+                onEdit={startEditing}
+              />
             ))}
           </div>
 
@@ -395,6 +500,12 @@ export default function Catalog() {
             </button>
           </div>
         </>
+      )}
+
+      {isAdmin && adminToast && (
+        <div className="ge-admin-toast" role="status" aria-live="polite">
+          {adminToast}
+        </div>
       )}
     </div>
   )
