@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useParams, useNavigate } from 'react-router-dom'
-import { addProductToCart } from '../lib/cart'
+import { addProductToCart, isProductInCart } from '../lib/cart'
 import { getCurrentUser, getAuthHeaders } from '../lib/auth'
 
 const formatPrice = (price) => Number(price || 0).toLocaleString('uk-UA')
@@ -37,7 +37,7 @@ export default function ProductDetails() {
   const [product, setProduct] = useState(productFromLink)
   const [loading, setLoading] = useState(!productFromLink)
   const [error, setError] = useState('')
-  const [added, setAdded] = useState(false)
+  const [inCart, setInCart] = useState(() => isProductInCart(id))
   const [imgBroken, setImgBroken] = useState(false)
   
   const [user, setUser] = useState(() => getCurrentUser())
@@ -57,6 +57,14 @@ export default function ProductDetails() {
     window.addEventListener('golden-eagle-auth-change', handleAuthChange)
     return () => window.removeEventListener('golden-eagle-auth-change', handleAuthChange)
   }, [])
+
+  useEffect(() => {
+    const updateCartState = () => setInCart(isProductInCart(id))
+
+    updateCartState()
+    window.addEventListener('golden-eagle-cart-change', updateCartState)
+    return () => window.removeEventListener('golden-eagle-cart-change', updateCartState)
+  }, [id])
 
   const startEditing = () => {
     if (!product) return
@@ -161,9 +169,13 @@ export default function ProductDetails() {
   }, [id, productFromLink])
 
   const handleAddToCart = () => {
+    if (inCart) {
+      navigate('/cart')
+      return
+    }
+
     addProductToCart(getProductId(product))
-    setAdded(true)
-    window.setTimeout(() => setAdded(false), 1600)
+    setInCart(true)
   }
 
   if (loading) {
@@ -263,19 +275,15 @@ export default function ProductDetails() {
 
               <div className="ge-form-group" style={{ marginBottom: '1rem' }}>
                 <label htmlFor="editMaterial">Матеріал</label>
-                <select
+                <input
                   id="editMaterial"
-                  className="ge-select"
+                  type="text"
+                  className="ge-input"
                   value={editMaterial}
                   onChange={e => setEditMaterial(e.target.value)}
                   disabled={saveLoading}
-                  style={{ width: '100%' }}
-                >
-                  <option value="">Уточнюється</option>
-                  <option value="Золото">Золото</option>
-                  <option value="Срібло">Срібло</option>
-                  <option value="Платина">Платина</option>
-                </select>
+                  placeholder="Наприклад: золото 585, фіаніт"
+                />
               </div>
 
               <div className="ge-form-group" style={{ marginBottom: '1rem' }}>
@@ -363,9 +371,8 @@ export default function ProductDetails() {
                   onClick={handleAddToCart}
                   disabled={!productId}
                 >
-                  {added ? 'Додано' : 'Додати в кошик'}
+                  {inCart ? 'Перейти до кошика' : 'Додати в кошик'}
                 </button>
-                <Link to="/cart" className="ge-btn-view">Перейти до кошика</Link>
                 
                 {user && user.role === 'admin' && (
                   <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem' }}>
