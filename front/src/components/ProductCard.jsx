@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { addProductToCart } from '../lib/cart';
+import { addProductToCart, isProductInCart } from '../lib/cart';
 
 const CAT_ICON = {
   'Каблучки': '💍',
@@ -15,8 +15,16 @@ const CAT_ICON = {
 export default function ProductCard({ product, isAdmin = false, onEdit }) {
   const navigate = useNavigate();
   const [imgBroken, setImgBroken] = useState(false);
-  const [added, setAdded] = useState(false);
+  const [inCart, setInCart] = useState(() => isProductInCart(product._id));
   const icon = CAT_ICON[product.category] ?? '💎';
+
+  useEffect(() => {
+    const updateCartState = () => setInCart(isProductInCart(product._id));
+
+    updateCartState();
+    window.addEventListener('golden-eagle-cart-change', updateCartState);
+    return () => window.removeEventListener('golden-eagle-cart-change', updateCartState);
+  }, [product._id]);
 
   const goToProduct = () => {
     navigate(`/product/${product._id}`, { state: { product } });
@@ -33,9 +41,13 @@ export default function ProductCard({ product, isAdmin = false, onEdit }) {
 
   const handleAddToCart = (event) => {
     event.stopPropagation();
+    if (inCart) {
+      navigate('/cart');
+      return;
+    }
+
     addProductToCart(product._id);
-    setAdded(true);
-    window.setTimeout(() => setAdded(false), 1400);
+    setInCart(true);
   };
 
   const handleEdit = (event) => {
@@ -73,7 +85,7 @@ export default function ProductCard({ product, isAdmin = false, onEdit }) {
           <span className="ge-price">{Number(product.price || 0).toLocaleString('uk-UA')} ₴</span>
           <div className={`ge-card__actions ${isAdmin ? 'ge-card__actions--admin' : ''}`}>
             <button className="ge-btn-view ge-card__cart-btn" type="button" onClick={handleAddToCart}>
-              {added ? 'Додано' : 'В кошик'}
+              {inCart ? 'Перейти до кошика' : 'В кошик'}
             </button>
             {isAdmin && (
               <button className="ge-btn-view" type="button" onClick={handleEdit}>

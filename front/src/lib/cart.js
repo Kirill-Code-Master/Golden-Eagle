@@ -35,6 +35,9 @@ const writeCart = (items) => {
 
 export const getCartItems = () => normalizeCart(readCart())
 
+export const isProductInCart = (productId) => getCartItems()
+  .some(item => item.productId === productId)
+
 export const getCartCount = () => getCartItems()
   .reduce((total, item) => total + item.quantity, 0)
 
