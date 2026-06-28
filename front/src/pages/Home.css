@@ -1,5 +1,5 @@
 .ge-hero {
-  padding: 8rem 0;
+  padding: 0rem 0;
   background: radial-gradient(circle at center, #1e1505 0%, #0d0c0a 100%);
   text-align: center;
   border-bottom: 1px solid rgba(201, 168, 76, 0.05);
@@ -43,7 +43,7 @@
 }
 
 .ge-featured {
-  padding: 5rem 0;
+  padding: 2rem 0;
 }
 
 .ge-home__more {

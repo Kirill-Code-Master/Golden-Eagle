@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useParams, useNavigate } from 'react-router-dom'
 import { addProductToCart, isProductInCart } from '../lib/cart'
 import { getCurrentUser, getAuthHeaders } from '../lib/auth'
+import { getProductImageSrc } from '../lib/images'
 
 const formatPrice = (price) => Number(price || 0).toLocaleString('uk-UA')
 
@@ -57,6 +58,10 @@ export default function ProductDetails() {
     window.addEventListener('golden-eagle-auth-change', handleAuthChange)
     return () => window.removeEventListener('golden-eagle-auth-change', handleAuthChange)
   }, [])
+
+  useEffect(() => {
+    setImgBroken(false)
+  }, [product?.image])
 
   useEffect(() => {
     const updateCartState = () => setInCart(isProductInCart(id))
@@ -201,6 +206,7 @@ export default function ProductDetails() {
   const icon = categoryIcon[product.category] ?? '💎'
   const description = getDescription(product)
   const productId = getProductId(product)
+  const imageSrc = getProductImageSrc(product.image)
 
   return (
     <div className="ge-container">
@@ -208,9 +214,10 @@ export default function ProductDetails() {
 
       <section className="ge-product">
         <div className="ge-product__media">
-          {!imgBroken && product.image ? (
+          {!imgBroken && imageSrc ? (
             <img
-              src={product.image}
+              key={imageSrc}
+              src={imageSrc}
               alt={product.name}
               onError={() => setImgBroken(true)}
             />
@@ -371,7 +378,7 @@ export default function ProductDetails() {
                   onClick={handleAddToCart}
                   disabled={!productId}
                 >
-                  {inCart ? 'Перейти до кошика' : 'Додати в кошик'}
+                  {inCart ? 'До кошика' : 'Додати в кошик'}
                 </button>
                 
                 {user && user.role === 'admin' && (

@@ -6,6 +6,7 @@ import app from '../src/app.js'
 import Product from '../src/product.js'
 import User from '../src/user.js'
 import { generateToken } from '../src/token.js'
+import { hashPassword } from '../src/password.js'
 
 const TEST_CATEGORY = '__test__'
 let adminToken = ''
@@ -83,7 +84,9 @@ describe('Інтеграційні API-тести товарів', () => {
       stock: product.stock,
     })
 
-    const listRes = await request(app).get('/api/products')
+    const listRes = await request(app)
+      .get('/api/products')
+      .query({ category: TEST_CATEGORY })
     const createdFromList = listRes.body.products.find((item) => item._id === createRes.body._id)
 
     expect(listRes.status).toBe(200)
@@ -236,6 +239,43 @@ describe('Інтеграційні API-тести товарів', () => {
 
       expect(duplicateRes.status).toBe(400)
       expect(duplicateRes.body.message).toBe('Користувач з таким ім’ям вже існує.')
+    })
+
+    it('відхиляє реєстрацію без обов’язкових полів або з коротким ім’ям користувача', async () => {
+      const missingFieldsRes = await request(app)
+        .post('/api/auth/register')
+        .send({ username: '', password: '' })
+
+      const shortUsernameRes = await request(app)
+        .post('/api/auth/register')
+        .send({ username: 'ab', password: 'testpassword123' })
+
+      expect(missingFieldsRes.status).toBe(400)
+      expect(missingFieldsRes.body.message).toBe('Ім’я користувача та пароль обов’язкові.')
+      expect(shortUsernameRes.status).toBe(400)
+      expect(shortUsernameRes.body.message).toBe('Ім’я користувача має бути не менше 3 символів.')
+    })
+
+    it('не дозволяє увійти з неправильним паролем або неіснуючим користувачем', async () => {
+      const username = `test_user_login_${Date.now()}`
+      await User.create({
+        username,
+        password: hashPassword('correctpassword123'),
+        role: 'user',
+      })
+
+      const wrongPasswordRes = await request(app)
+        .post('/api/auth/login')
+        .send({ username, password: 'wrongpassword123' })
+
+      const missingUserRes = await request(app)
+        .post('/api/auth/login')
+        .send({ username: `test_user_missing_${Date.now()}`, password: 'wrongpassword123' })
+
+      expect(wrongPasswordRes.status).toBe(400)
+      expect(wrongPasswordRes.body.message).toBe('Некоректне ім’я користувача або пароль.')
+      expect(missingUserRes.status).toBe(400)
+      expect(missingUserRes.body.message).toBe('Некоректне ім’я користувача або пароль.')
     })
 
     it('забороняє створювати або редагувати товари без токена або з роллю user', async () => {

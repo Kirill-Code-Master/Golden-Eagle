@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { addProductToCart, isProductInCart } from '../lib/cart';
+import { getProductImageSrc } from '../lib/images';
 
 const CAT_ICON = {
   'Каблучки': '💍',
@@ -17,6 +18,11 @@ export default function ProductCard({ product, isAdmin = false, onEdit }) {
   const [imgBroken, setImgBroken] = useState(false);
   const [inCart, setInCart] = useState(() => isProductInCart(product._id));
   const icon = CAT_ICON[product.category] ?? '💎';
+  const imageSrc = getProductImageSrc(product.image);
+
+  useEffect(() => {
+    setImgBroken(false);
+  }, [imageSrc]);
 
   useEffect(() => {
     const updateCartState = () => setInCart(isProductInCart(product._id));
@@ -65,9 +71,10 @@ export default function ProductCard({ product, isAdmin = false, onEdit }) {
       aria-label={`Переглянути товар ${product.name}`}
     >
       <div className="ge-card__thumb">
-        {!imgBroken && product.image ? (
+        {!imgBroken && imageSrc ? (
           <img
-            src={product.image}
+            key={imageSrc}
+            src={imageSrc}
             alt={product.name}
             onError={() => setImgBroken(true)}
           />
@@ -76,7 +83,6 @@ export default function ProductCard({ product, isAdmin = false, onEdit }) {
         )}
       </div>
       <div className="ge-card__body">
-        <span className="ge-tag">{icon} {product.category}</span>
         <h3 className="ge-card__name">{product.name}</h3>
         {product.material && (
           <p className="ge-card__material">{product.material}</p>
@@ -85,7 +91,7 @@ export default function ProductCard({ product, isAdmin = false, onEdit }) {
           <span className="ge-price">{Number(product.price || 0).toLocaleString('uk-UA')} ₴</span>
           <div className={`ge-card__actions ${isAdmin ? 'ge-card__actions--admin' : ''}`}>
             <button className="ge-btn-view ge-card__cart-btn" type="button" onClick={handleAddToCart}>
-              {inCart ? 'Перейти до кошика' : 'В кошик'}
+              {inCart ? 'До кошика' : 'В кошик'}
             </button>
             {isAdmin && (
               <button className="ge-btn-view" type="button" onClick={handleEdit}>

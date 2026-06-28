@@ -95,14 +95,14 @@
 }
 
 .ge-form-group label {
-  font-size: 0.85rem;
-  color: var(--gold-dim);
+  font-size: 0.9rem;
+  color: #a88b4d;
   letter-spacing: 0.05em;
 }
 
 .ge-form-group .ge-input {
   background: #17140c;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(201, 168, 76, 0.58);
   border-radius: 6px;
   color: var(--text-color);
   padding: 0.8rem 1rem;
@@ -112,9 +112,14 @@
   width: 100%;
 }
 
+.ge-form-group .ge-input::placeholder {
+  color: rgba(201, 168, 76, 0.62);
+}
+
 .ge-form-group .ge-input:focus {
   border-color: var(--gold);
-  box-shadow: 0 0 8px rgba(201, 168, 76, 0.15);
+  background: #1a1609;
+  box-shadow: 0 0 0 2px rgba(201, 168, 76, 0.16);
 }
 
 .ge-form-group .ge-input.error {

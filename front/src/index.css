@@ -59,13 +59,14 @@ button {
 /* ── Components (extracted from Home.jsx) ────────────────────── */
 .ge-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 210px));
+  justify-content: center;
+  gap: 1.25rem;
 }
 
 .ge-card {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255, 255, 255, .30);
   border-radius: 10px;
   overflow: hidden;
   transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
@@ -84,13 +85,14 @@ button {
 
 .ge-card:hover {
   transform: translateY(-4px);
-  border-color: rgba(201,168,76,.28);
+  border-color: rgba(245, 194, 66, .82);
   box-shadow: 0 18px 44px rgba(0,0,0,.55);
 }
 
 .ge-card__thumb {
-  height: 200px;
+  aspect-ratio: 1 / 1;
   background: #1a1609;
+  border-bottom: 1px solid rgba(255, 255, 255, .18);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -109,7 +111,7 @@ button {
 }
 
 .ge-card__body {
-  padding: 1.25rem;
+  padding: 1rem;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -128,7 +130,7 @@ button {
 }
 
 .ge-card__name {
-  font-size: 1rem;
+  font-size: .95rem;
   font-weight: 500;
   color: var(--text-color);
   margin-bottom: .45rem;
@@ -137,7 +139,7 @@ button {
 
 .ge-card__material {
   color: var(--gold-dim);
-  font-size: .82rem;
+  font-size: .8rem;
   line-height: 1.45;
   margin-bottom: 1rem;
 }
@@ -147,12 +149,12 @@ button {
   display: flex;
   align-items: stretch;
   justify-content: space-between;
-  gap: 1rem;
+  gap: .75rem;
   flex-wrap: wrap;
 }
 
 .ge-price {
-  font-size: 1.2rem;
+  font-size: 1.08rem;
   font-weight: 700;
   color: var(--gold);
 }
@@ -170,6 +172,9 @@ button {
 
 .ge-card__actions .ge-btn-view {
   width: 100%;
+  padding: .38rem .55rem;
+  font-size: .74rem;
+  white-space: nowrap;
   text-align: center;
 }
 
@@ -177,7 +182,7 @@ button {
   background: transparent;
   border: 1px solid var(--gold);
   color: var(--gold);
-  padding: 0.5rem 1rem;
+  padding: 0.45rem .75rem;
   border-radius: 6px;
   font-size: 0.8rem;
   font-weight: 600;
@@ -559,11 +564,24 @@ button {
 
 .ge-input,
 .ge-select {
-  background: var(--surface);
+  background: #17140c;
   color: var(--text-color);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(201,168,76,.58);
   border-radius: 8px;
   padding: .75rem 1rem;
+  outline: none;
+  transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+}
+
+.ge-input::placeholder {
+  color: rgba(201,168,76,.62);
+}
+
+.ge-input:focus,
+.ge-select:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(201,168,76,.16);
+  background: #1a1609;
 }
 
 .ge-input {
@@ -638,8 +656,8 @@ button {
 }
 
 .ge-form-group label {
-  color: var(--gold-dim);
-  font-size: .82rem;
+  color: #a88b4d;
+  font-size: .88rem;
   font-weight: 600;
 }
 
@@ -729,6 +747,10 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 @media (max-width: 640px) {
+  .ge-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+
   .ge-cart-head {
     flex-direction: column;
   }
