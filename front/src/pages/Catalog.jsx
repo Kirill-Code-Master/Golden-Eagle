@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import ProductCard from '../components/ProductCard'
 import { getCurrentUser, getAuthHeaders } from '../lib/auth'
 
@@ -123,6 +123,33 @@ export default function Catalog() {
     stock: Number(productForm.stock)
   })
 
+  const loadProducts = useCallback((targetPage = page) => {
+    const params = new URLSearchParams({
+      page: targetPage,
+      limit: 15
+    })
+
+    if (search.trim()) params.append('search', search.trim())
+    if (sortBy) params.append('sortBy', sortBy)
+    if (sortBy) params.append('order', order)
+    if (category) params.append('category', category)
+    if (material) params.append('material', material)
+
+    setLoading(true)
+
+    return fetch(`/api/products?${params.toString()}`)
+      .then(response => response.json())
+      .then(data => {
+        setProducts(data.products || [])
+        setTotalPages(data.totalPages || 1)
+      })
+      .catch(() => {
+        setProducts([])
+        setTotalPages(1)
+      })
+      .finally(() => setLoading(false))
+  }, [category, material, order, page, search, sortBy])
+
   const handleSaveProduct = async (event) => {
     event.preventDefault()
     setFormError('')
@@ -147,14 +174,9 @@ export default function Catalog() {
         throw new Error(data.message || (isEditing ? 'Не вдалося зберегти зміни.' : 'Не вдалося додати новий виріб.'))
       }
 
-      setProducts(prev => {
-        if (isEditing) {
-          return prev.map(product => product._id === data._id ? data : product)
-        }
-        return [data, ...prev]
-      })
-
-      if (!isEditing) setPage(1)
+      const nextPage = isEditing ? page : 1
+      if (!isEditing && page !== 1) setPage(1)
+      await loadProducts(nextPage)
       resetProductForm()
       showAdminToast(isEditing ? 'Товар успішно відредаговано.' : 'Товар успішно створено.')
     } catch (err) {
@@ -193,34 +215,11 @@ export default function Catalog() {
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
-      const params = new URLSearchParams({
-        page,
-        limit: 20
-      })
-
-      if (search.trim()) params.append('search', search.trim())
-      if (sortBy) params.append('sortBy', sortBy)
-      if (sortBy) params.append('order', order)
-      if (category) params.append('category', category)
-      if (material) params.append('material', material)
-
-      setLoading(true)
-
-      fetch(`/api/products?${params.toString()}`)
-        .then(response => response.json())
-        .then(data => {
-          setProducts(data.products || [])
-          setTotalPages(data.totalPages || 1)
-        })
-        .catch(() => {
-          setProducts([])
-          setTotalPages(1)
-        })
-        .finally(() => setLoading(false))
+      loadProducts(page)
     }, 0)
 
     return () => window.clearTimeout(timeoutId)
-  }, [page, search, sortBy, order, category, material])
+  }, [loadProducts, page])
 
   const resetFilters = () => {
     setSearch('')

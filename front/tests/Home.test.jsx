@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom/vitest'
-import { render, screen } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import Home from '../src/pages/Home.jsx'
 
@@ -19,13 +19,19 @@ afterEach(() => {
 })
 
 describe('Головна сторінка Home', () => {
+  const LocationProbe = () => {
+    const location = useLocation()
+    return <span data-testid="current-path">{location.pathname}</span>
+  }
+
   const renderHome = () => render(
     <MemoryRouter>
       <Home />
+      <LocationProbe />
     </MemoryRouter>
   )
 
-  it('показує товар з головної добірки API з назвою, ціною та посиланням на сторінку деталей', async () => {
+  it('показує товар з головної добірки API та відкриває сторінку деталей кліком по картці', async () => {
     fetch.mockResolvedValueOnce(jsonResponse({
       products: [
         {
@@ -43,10 +49,10 @@ describe('Головна сторінка Home', () => {
 
     expect(await screen.findByText('Каблучка тестова')).toBeInTheDocument()
     expect(screen.getByText('2 500 ₴')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Переглянути' })).toHaveAttribute(
-      'href',
-      '/product/507f1f77bcf86cd799439011',
-    )
+
+    fireEvent.click(screen.getByRole('link', { name: 'Переглянути товар Каблучка тестова' }))
+
+    expect(screen.getByTestId('current-path')).toHaveTextContent('/product/507f1f77bcf86cd799439011')
   })
 
   it('показує посилання на повний каталог, коли API повертає порожній список товарів для головної сторінки', async () => {

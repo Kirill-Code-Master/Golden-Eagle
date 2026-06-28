@@ -133,7 +133,7 @@ app.get('/api/products', async (req, res) => {
       material,
       search,
       page = 1,
-      limit = 20
+      limit = 15
     } = req.query
 
     const filter = {}

@@ -2,19 +2,54 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 
+const retryDelays = [350, 900];
+
+const wait = (delay) => new Promise(resolve => setTimeout(resolve, delay));
+
+async function fetchFeaturedProducts(attempt = 0) {
+  try {
+    const response = await fetch('/api/products');
+    if (!response.ok) {
+      throw new Error('products request failed');
+    }
+
+    const data = await response.json();
+    const list = Array.isArray(data) ? data : data.products || [];
+    return list.slice(0, 5);
+  } catch (error) {
+    if (attempt >= retryDelays.length) {
+      return null;
+    }
+
+    await wait(retryDelays[attempt]);
+    return fetchFeaturedProducts(attempt + 1);
+  }
+}
+
 export default function Home() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
-    fetch('/api/products')
-      .then(r => r.ok ? r.json() : [])
-      .then(data => {
-        const list = Array.isArray(data) ? data : data.products || [];
-        setProducts(list.slice(0, 4)); // Show only first 4 on home page
-        setLoading(false);
+    let ignore = false;
+
+    fetchFeaturedProducts()
+      .then(featuredProducts => {
+        if (!ignore) {
+          setProducts(featuredProducts || []);
+          setLoadFailed(featuredProducts === null);
+        }
       })
-      .catch(() => setLoading(false));
+      .finally(() => {
+        if (!ignore) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   return (
@@ -29,9 +64,13 @@ export default function Home() {
 
       <section className="ge-featured">
         <div className="ge-container">
-          <h2 className="ge-stitle">Популярні вироби</h2>
+          <h2 className="ge-stitle">Каталог виробів</h2>
           {loading ? (
             <p>Завантаження...</p>
+          ) : loadFailed ? (
+            <div className="ge-state-box">
+              <p>Товари каталогу тимчасово недоступні. Перейдіть до каталогу або спробуйте оновити сторінку.</p>
+            </div>
           ) : (
             <div className="ge-grid">
               {products.map(p => <ProductCard key={p._id} product={p} />)}

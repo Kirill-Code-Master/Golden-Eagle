@@ -7,6 +7,7 @@ import {
   clearCart,
 } from '../lib/cart'
 import { getCurrentUser, getAuthHeaders } from '../lib/auth'
+import { getProductImageSrc } from '../lib/images'
 
 const formatPrice = (price) => Number(price || 0).toLocaleString('uk-UA')
 
@@ -22,12 +23,18 @@ const categoryIcon = {
 
 function CartProductThumb({ product, icon }) {
   const [imgBroken, setImgBroken] = useState(false)
+  const imageSrc = getProductImageSrc(product.image)
+
+  useEffect(() => {
+    setImgBroken(false)
+  }, [imageSrc])
 
   return (
     <Link to={`/product/${product._id}`} className="ge-cart-row__thumb" aria-label={product.name}>
-      {!imgBroken && product.image ? (
+      {!imgBroken && imageSrc ? (
         <img
-          src={product.image}
+          key={imageSrc}
+          src={imageSrc}
           alt={product.name}
           onError={() => setImgBroken(true)}
         />
