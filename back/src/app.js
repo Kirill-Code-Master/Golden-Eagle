@@ -1,9 +1,11 @@
 import express from 'express'
 import cors from 'cors'
+import swaggerUi from 'swagger-ui-express'
 import Product from './product.js'
 import User from './user.js'
 import { hashPassword, verifyPassword } from './password.js'
 import { verifyToken } from './token.js'
+import swaggerDocument from './swagger.js'
 
 const app = express()
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -14,6 +16,11 @@ const appendAndCondition = (filter, condition) => {
 
 app.use(cors())
 app.use(express.json())
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
+
+app.get('/api-docs.json', (req, res) => {
+  res.json(swaggerDocument)
+})
 
 // Authentication middleware to populate req.user
 const authenticate = (req, res, next) => {
